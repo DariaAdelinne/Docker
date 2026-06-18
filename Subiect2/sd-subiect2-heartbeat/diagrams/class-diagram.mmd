@@ -1,0 +1,60 @@
+classDiagram
+    class SocketLine {
+        +connect(host, port, timeoutMs) Socket
+        +sendAndRead(host, port, line, timeoutMs) String?
+    }
+    class HealthServer {
+        -serviceName: String
+        -serviceType: String
+        -port: Int
+        +start()
+    }
+    class MessageManagerMicroservice {
+        -subscribers: ConcurrentHashMap~Int, Subscriber~
+        -broadcast(message, exceptId)
+        -respondTo(destinationId, message)
+        -handleClient(client)
+        +run()
+    }
+    class TeacherMicroservice {
+        -managerSocket: Socket
+        -subscribeToMessageManager()
+        -handleQuestion(client)
+        +run()
+    }
+    class StudentMicroservice {
+        -qa: MutableMap~String, String~
+        -loadDatabase()
+        -subscribe()
+        +run()
+    }
+    class HeartbeatProcessor {
+        -services: List~ServiceEndpoint~
+        -checkPing(endpoint)
+        -checkFlowViaTeacher(endpoint)
+        -requestReplication(endpoint, reason)
+        +run()
+    }
+    class ReplicationProcessor {
+        -logPath: String
+        -handle(client)
+        +run()
+    }
+    class ServiceEndpoint {
+        +name: String
+        +type: String
+        +host: String
+        +port: Int
+        +mode: String
+    }
+    MessageManagerMicroservice --> SocketLine
+    TeacherMicroservice --> SocketLine
+    StudentMicroservice --> SocketLine
+    HeartbeatProcessor --> ServiceEndpoint
+    HeartbeatProcessor --> SocketLine
+    HeartbeatProcessor --> ReplicationProcessor : sends REPLICATE request
+    MessageManagerMicroservice --> Subscriber
+    HealthServer <.. MessageManagerMicroservice
+    HealthServer <.. TeacherMicroservice
+    HealthServer <.. StudentMicroservice
+    HealthServer <.. ReplicationProcessor

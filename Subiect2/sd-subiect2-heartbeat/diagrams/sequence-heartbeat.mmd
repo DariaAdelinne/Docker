@@ -1,0 +1,17 @@
+sequenceDiagram
+    participant HB as HeartbeatProcessor
+    participant T as TeacherMicroservice
+    participant MM as MessageManager
+    participant S as StudentMicroservice
+    participant RP as ReplicationProcessor
+
+    HB->>T: mesaj fals "__healthcheck__"
+    T->>MM: QUESTION <teacherId> __healthcheck__
+    MM->>S: broadcast QUESTION <teacherId> __healthcheck__
+    S->>MM: ANSWER <teacherId> OK_HEARTBEAT
+    MM->>T: ANSWER OK_HEARTBEAT
+    T->>HB: OK_HEARTBEAT
+    alt timeout sau eroare
+        HB->>RP: REPLICATE <serviceName> <type> <reason>
+        RP-->>HB: REPLICATION_REQUEST_ACCEPTED
+    end

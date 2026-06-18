@@ -1,0 +1,76 @@
+services:
+  message-manager:
+    build: .
+    container_name: sd2_message_manager
+    environment:
+      MAIN_CLASS: com.sd.laborator.manager.MessageManagerMainKt
+      SERVICE_NAME: message-manager
+    ports:
+      - "1500:1500"
+      - "1501:1501"
+
+  teacher:
+    build: .
+    container_name: sd2_teacher
+    depends_on:
+      - message-manager
+    environment:
+      MAIN_CLASS: com.sd.laborator.teacher.TeacherMainKt
+      SERVICE_NAME: teacher
+      MESSAGE_MANAGER_HOST: message-manager
+      QUESTION_TIMEOUT_MS: 3000
+    ports:
+      - "1600:1600"
+      - "1601:1601"
+
+  student1:
+    build: .
+    container_name: sd2_student1
+    depends_on:
+      - message-manager
+    environment:
+      MAIN_CLASS: com.sd.laborator.student.StudentMainKt
+      SERVICE_NAME: student1
+      MESSAGE_MANAGER_HOST: message-manager
+      QUESTIONS_DB: questions_database_student1.txt
+
+  student2:
+    build: .
+    container_name: sd2_student2
+    depends_on:
+      - message-manager
+    environment:
+      MAIN_CLASS: com.sd.laborator.student.StudentMainKt
+      SERVICE_NAME: student2
+      MESSAGE_MANAGER_HOST: message-manager
+      QUESTIONS_DB: questions_database_student2.txt
+
+  replication-processor:
+    build: .
+    container_name: sd2_replication_processor
+    environment:
+      MAIN_CLASS: com.sd.laborator.replication.ReplicationProcessorMainKt
+      SERVICE_NAME: replication-processor
+      REPLICATION_LOG: /data/replication_requests.log
+    volumes:
+      - replication-data:/data
+    ports:
+      - "1800:1800"
+
+  heartbeat-processor:
+    build: .
+    container_name: sd2_heartbeat_processor
+    depends_on:
+      - message-manager
+      - teacher
+      - student1
+      - student2
+      - replication-processor
+    environment:
+      MAIN_CLASS: com.sd.laborator.heartbeat.HeartbeatProcessorMainKt
+      HEARTBEAT_INTERVAL_MS: 5000
+      REPLICATION_HOST: replication-processor
+      SERVICES_TO_CHECK: teacher-flow:flow:teacher:1600:FLOW,teacher:teacher:teacher:1601:PING,message-manager:message-manager:message-manager:1501:PING,student1:student:student1:1701:PING,student2:student:student2:1701:PING
+
+volumes:
+  replication-data:

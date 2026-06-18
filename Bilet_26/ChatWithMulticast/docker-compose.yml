@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+
+  # Ruteaza mesajele TEXT broadcast (din lab 8, cu coroutine)
+  message-manager:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.manager.MessageManagerMainKt
+    ports:
+      - "1500:1500"
+
+  # Noul microserviciu: procesor de flux multicast
+  # Gestioneaza grupuri (subgrupuri de studenti) si trimite mesaje simultan la toti membrii
+  multicast-processor:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.multicast.MulticastProcessorMainKt
+    ports:
+      - "1700:1700"
+    depends_on:
+      - message-manager
+
+  # Utilizator Alice
+  user-alice:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.chat.ChatMicroserviceMainKt
+      - SERVICE_NAME=alice
+      - SERVICE_HOST=user-alice
+      - CHAT_PORT=3001
+      - MESSAGE_MANAGER_HOST=message-manager
+      - MULTICAST_HOST=multicast-processor
+    ports:
+      - "3001:3001"
+    depends_on:
+      - message-manager
+      - multicast-processor
+
+  # Utilizator Bob
+  user-bob:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.chat.ChatMicroserviceMainKt
+      - SERVICE_NAME=bob
+      - SERVICE_HOST=user-bob
+      - CHAT_PORT=3001
+      - MESSAGE_MANAGER_HOST=message-manager
+      - MULTICAST_HOST=multicast-processor
+    ports:
+      - "3002:3001"
+    depends_on:
+      - message-manager
+      - multicast-processor
+
+  # Utilizator Carol
+  user-carol:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.chat.ChatMicroserviceMainKt
+      - SERVICE_NAME=carol
+      - SERVICE_HOST=user-carol
+      - CHAT_PORT=3001
+      - MESSAGE_MANAGER_HOST=message-manager
+      - MULTICAST_HOST=multicast-processor
+    ports:
+      - "3003:3001"
+    depends_on:
+      - message-manager
+      - multicast-processor
+
+  # Client interactiv — pornit separat cu: docker compose run --rm chat-client
+  chat-client:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.client.ChatClientMainKt
+      - FROM_USER=profesor
+      - MESSAGE_MANAGER_HOST=message-manager
+      - MULTICAST_HOST=multicast-processor
+    stdin_open: true
+    tty: true
+    depends_on:
+      - user-alice
+      - user-bob
+      - user-carol
+    profiles:
+      - client

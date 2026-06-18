@@ -1,0 +1,151 @@
+
+Pas 1:  java si SDK
+- poti rula jav -version sa vezi ce veriune activa ai
+proiectul nostru cere java 17 si ai 2 variante
+1. Nu e recomadat, te duci in pom si schimbi in <jvmTarget>1.8</jvmTarget> sau ce versiune ai tu
+2. Recomandat te duci in file -> project structure si setezisdk la 17
+(daca nu il gasesti rulezi aceste comenzi ca sa il instalezi
+sudo apt update
+sudo apt install openjdk-17-jdk)
+
+Pas 2:  Docker
+verifici daca ai docker instalat si ce versiune
+(docker --version si docker-compose --version )
+
+in cazul pun probabil in care nu il ai si nu iti merg anumite comenzi cu docker faci asta
+(Pasul 1 — Instalează docker-compose separat
+ sudo apt-get install -y docker-compose
+
+ Pasul 2 — Verifici că Docker merge
+ sudo systemctl start docker
+ sudo docker ps)
+
+ apoi  daca o sa incerci niste comenzi si nu iti merg faci asta (
+
+sudo apt-get remove docker-compose
+sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+docker-compose --version)
+
+
+Pas 3: aici pornesti dockerul,  stergi ce e in dockere deja pornit si iti pornesti dockerul
+# 2. Pornire Docker
+sudo systemctl start docker
+sudo systemctl enable docker
+
+
+sudo docker-compose down -v
+sudo docker-compose up --build
+
+
+
+Pas 4 : dupa asta deschizi alt terminal si rulezi
+
+echo "Care e sensul vietii?" | nc localhost 1600   raspunsul va fi 42
+
+echo "Cat face 2+2?" | nc localhost 1600  raspunsul va fi 4
+
+echo "De ce a trecut gaina strada?" | nc localhost 1600  raspunsul va fi ca sa ajunga pe partea cealalta
+
+
+
+daca iti apare o eroare la comenzile anterioare ca nu ai nc sau ceva de genul
+(sudo apt-get install -y netcat-openbsd)
+
+
+
+
+
+
+
+
+
+
+
+SAU DACA nu merge cu docker-compose si trebubuie sa folosesti docker compose  
+
+# 5. Pornire aplicație
+docker compose down -v
+docker compose up --build
+
+docker stop $(docker ps -q)
+sudo docker stop $(sudo docker ps -q)
+
+
+
+
+
+
+
+
+
+
+
+# 1. Instalare necesare
+sudo apt-get update
+sudo apt-get install -y unzip netcat-openbsd docker.io docker-compose-plugin
+
+# 2. Pornire Docker
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# 3. Dacă Docker cere permisiuni
+sudo usermod -aG docker $USER
+# apoi logout/login sau restart VM
+
+# 4. Dezarhivare proiect
+cd /home/student/Downloads
+unzip sd-subiect2-heartbeat-fixed.zip
+cd sd-subiect2-heartbeat
+
+# 5. Pornire aplicație
+docker compose down -v
+docker compose up --build
+
+În alt terminal:
+
+cd /home/student/Downloads/sd-subiect2-heartbeat
+
+# 6. Test chat
+./scripts/ask.sh "Care e sensul vietii?"
+
+Trebuie să afișeze ceva de forma:
+
+Intrebare: Care e sensul vietii?
+Raspuns: 42
+
+Test heartbeat + replicare:
+
+# Oprești un serviciu
+docker stop sd2_student1
+
+# Verifici că heartbeat-ul îl detectează
+docker logs sd2_heartbeat_processor
+
+# Verifici că s-a trimis cerere de replicare
+docker logs sd2_replication_processor
+docker exec sd2_replication_processor cat /data/replication_requests.log
+
+# Pornești serviciul la loc
+docker start sd2_student1
+
+Trebuie să vezi mesaje de forma:
+
+Serviciul student1 nu raspunde
+Cerere de replicare primita pentru student1
+REPLICATE student1
+
+Oprire finală:
+
+docker compose down
+
+Dacă apare permission denied la Docker:
+
+sudo docker compose up --build
+
+Dacă apare port is already allocated:
+
+docker ps -a
+docker stop <ID_CONTAINER>
+docker rm <ID_CONTAINER>
+docker compose up --build

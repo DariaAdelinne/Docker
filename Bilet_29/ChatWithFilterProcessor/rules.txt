@@ -1,0 +1,25 @@
+# Reguli de filtrare a comunicatiei (procesate in ordine, primul match castiga)
+# Sintaxa:
+#   ALLOW PORT_RANGE <minPort> <maxPort>   - accepta mesaje din aceasta gama de porturi
+#   DENY  PORT_RANGE <minPort> <maxPort>   - respinge mesaje din aceasta gama de porturi
+#   ALLOW USER <username>                  - accepta explicit un utilizator
+#   DENY  USER <username>                  - respinge explicit un utilizator
+#   ALLOW KEYWORD <cuvant>                 - accepta daca mesajul contine cuvantul
+#   DENY  KEYWORD <cuvant>                 - respinge daca mesajul contine cuvantul
+#   ALLOW ALL                              - accepta orice (regula implicita)
+#   DENY  ALL                              - respinge orice
+
+# Accepta utilizatorul "admin" indiferent de port
+ALLOW USER admin
+
+# Respinge utilizatorii din gama de porturi 9000-9999 (porturi nedorite)
+DENY PORT_RANGE 9000 9999
+
+# Accepta traficul din gama de porturi 3000-5000 (gama normala de clienti)
+ALLOW PORT_RANGE 3000 5000
+
+# Respinge mesajele care contin cuvantul "spam"
+DENY KEYWORD spam
+
+# Regula implicita: accepta tot ce nu a fost prins de regulile de mai sus
+ALLOW ALL

@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+
+  # Ruteaza mesajele TEXT intre utilizatori (din lab 8, cu coroutine)
+  message-manager:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.manager.MessageManagerMainKt
+    ports:
+      - "1500:1500"
+
+  # Noul microserviciu: procesor de flux pentru transferul fisierelor
+  # Primeste un fisier de la sender, ii forwardeaza fluxul de bytes direct catre destinatar
+  stream-processor:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.stream.StreamProcessorMainKt
+    ports:
+      - "1700:1700"
+    depends_on:
+      - message-manager
+
+  # Utilizator Alice
+  user-alice:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.chat.ChatMicroserviceMainKt
+      - SERVICE_NAME=alice
+      - SERVICE_HOST=user-alice
+      - CHAT_PORT=3001
+      - MESSAGE_MANAGER_HOST=message-manager
+      - STREAM_PROCESSOR_HOST=stream-processor
+      - FILES_DIR=/tmp/received_alice
+    ports:
+      - "3001:3001"
+    depends_on:
+      - message-manager
+      - stream-processor
+
+  # Utilizator Bob
+  user-bob:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.chat.ChatMicroserviceMainKt
+      - SERVICE_NAME=bob
+      - SERVICE_HOST=user-bob
+      - CHAT_PORT=3001
+      - MESSAGE_MANAGER_HOST=message-manager
+      - STREAM_PROCESSOR_HOST=stream-processor
+      - FILES_DIR=/tmp/received_bob
+    ports:
+      - "3002:3001"
+    depends_on:
+      - message-manager
+      - stream-processor
+
+  # Client interactiv — pornit separat cu: docker compose run --rm chat-client
+  chat-client:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.client.ChatClientMainKt
+      - FROM_USER=client
+      - MESSAGE_MANAGER_HOST=message-manager
+      - STREAM_PROCESSOR_HOST=stream-processor
+    volumes:
+      - ./test-files:/test-files:ro
+    stdin_open: true
+    tty: true
+    depends_on:
+      - message-manager
+      - stream-processor
+      - user-alice
+      - user-bob
+    profiles:
+      - client

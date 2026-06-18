@@ -1,0 +1,12 @@
+digraph G {
+  graph [rankdir=LR, splines=ortho]; node [shape=record, fontsize=10];
+  SocketLine [label="{SocketLine|+connect()\l+sendAndRead()\l}"];
+  HealthServer [label="{HealthServer|-serviceName\l-serviceType\l-port\l|+start()\l}"];
+  MM [label="{MessageManagerMicroservice|-subscribers\l|-broadcast()\l-respondTo()\l-handleClient()\l+run()\l}"];
+  Teacher [label="{TeacherMicroservice|-managerSocket\l|-subscribeToMessageManager()\l-handleQuestion()\l+run()\l}"];
+  Student [label="{StudentMicroservice|-qa\l|-loadDatabase()\l-subscribe()\l+run()\l}"];
+  Heartbeat [label="{HeartbeatProcessor|-services\l|-checkPing()\l-checkFlowViaTeacher()\l-requestReplication()\l+run()\l}"];
+  Repl [label="{ReplicationProcessor|-logPath\l|-handle()\l+run()\l}"];
+  Endpoint [label="{ServiceEndpoint|+name\l+type\l+host\l+port\l+mode\l}"];
+  MM -> SocketLine; Teacher -> SocketLine; Student -> SocketLine; Heartbeat -> SocketLine; Heartbeat -> Endpoint; Heartbeat -> Repl [label="REPLICATE"]; MM -> HealthServer [style=dashed]; Teacher -> HealthServer [style=dashed]; Student -> HealthServer [style=dashed]; Repl -> HealthServer [style=dashed];
+}

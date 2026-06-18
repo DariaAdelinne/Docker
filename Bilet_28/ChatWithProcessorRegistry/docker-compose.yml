@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+
+  # Registrul de procesoare de flux — Subject din pattern-ul Observer
+  # Orice procesor de flux se inregistreaza aici la pornire si se sterge la oprire
+  processor-registry:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.registry.ProcessorRegistryMainKt
+    ports:
+      - "1600:1600"
+
+  # MessageManager — Observer: se subscrie la Registry si isi actualizeaza dinamic pipeline-ul
+  message-manager:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.manager.MessageManagerMainKt
+      - REGISTRY_HOST=processor-registry
+      - SERVICE_HOST=message-manager
+    ports:
+      - "1500:1500"
+      - "1501:1501"   # portul pe care primeste notificari push de la Registry
+    depends_on:
+      - processor-registry
+
+  # Procesoare de flux — se inregistreaza la pornire, se dezinregistreaza la oprire
+
+  # LogProcessor: jurnalizeaza fiecare mesaj, nu il modifica
+  log-processor:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.processors.LogProcessorMainKt
+      - SERVICE_NAME=log-processor
+      - SERVICE_HOST=log-processor
+      - LISTEN_PORT=1701
+      - REGISTRY_HOST=processor-registry
+      - LOG_PATH=/tmp/chat_messages.log
+    ports:
+      - "1701:1701"
+    depends_on:
+      - processor-registry
+      - message-manager
+
+  # UpperCaseProcessor: transforma mesajele in MAJUSCULE
+  uppercase-processor:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.processors.UpperCaseProcessorMainKt
+      - SERVICE_NAME=uppercase-processor
+      - SERVICE_HOST=uppercase-processor
+      - LISTEN_PORT=1702
+      - REGISTRY_HOST=processor-registry
+    ports:
+      - "1702:1702"
+    depends_on:
+      - processor-registry
+      - message-manager
+
+  # Utilizatori de chat
+  user-alice:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.chat.ChatMicroserviceMainKt
+      - SERVICE_NAME=alice
+      - MESSAGE_MANAGER_HOST=message-manager
+    depends_on:
+      - message-manager
+
+  user-bob:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.chat.ChatMicroserviceMainKt
+      - SERVICE_NAME=bob
+      - MESSAGE_MANAGER_HOST=message-manager
+    depends_on:
+      - message-manager
+
+  # Client interactiv
+  chat-client:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.client.ChatClientMainKt
+      - FROM_USER=profesor
+      - MESSAGE_MANAGER_HOST=message-manager
+      - REGISTRY_HOST=processor-registry
+    stdin_open: true
+    tty: true
+    depends_on:
+      - message-manager
+      - log-processor
+      - uppercase-processor
+    profiles:
+      - client

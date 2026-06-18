@@ -1,0 +1,4 @@
+SUBIECT 2 x
+---------
+Pornind de la aplicația exemplu de chat din laboratorul 8, să se modifice aceasta prin introducerea unui procesor de flux care implementează un mecanism de "bătaie de inimă" ce trimite mesaje false, în scopul verificării funcționării corecte ale celorlalte microservicii. Dacă un serviciu nu funcționează, se va trimite o cerere de replicare a acestuia unui procesor de flux dedicat.
+Dacă se consideră necesar se mai pot crea oricâte servicii se dorește conform gândirii studentului. Se vor respecta principiile SOLID pentru microservicii. La prezentare se va arăta diagrama de clase și se va explica aceasta împreună cu gradul de respectare a principiilor. Apoi va urma discuția pe cod.

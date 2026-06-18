@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+
+  # Ruteaza mesajele deja filtrate (lab 8, cu coroutine)
+  message-manager:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.manager.MessageManagerMainKt
+    ports:
+      - "1500:1500"
+
+  # Noul microserviciu: procesor de flux care filtreaza comunicatia dupa reguli
+  # Incarca regulile din rules.txt, evalueaza fiecare mesaj prin Chain of Responsibility
+  # si salveaza rezultatele in fisiere locale (accepted.log, rejected.log)
+  filter-processor:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.filter.FilterProcessorMainKt
+      - MESSAGE_MANAGER_HOST=message-manager
+      - RULES_PATH=/app/rules.txt
+      - ACCEPTED_LOG=/tmp/accepted.log
+      - REJECTED_LOG=/tmp/rejected.log
+    ports:
+      - "1700:1700"
+    depends_on:
+      - message-manager
+
+  # Utilizator Alice — primeste doar mesajele acceptate de filtru
+  user-alice:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.chat.ChatMicroserviceMainKt
+      - SERVICE_NAME=alice
+      - MESSAGE_MANAGER_HOST=message-manager
+    depends_on:
+      - message-manager
+
+  # Utilizator Bob
+  user-bob:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.chat.ChatMicroserviceMainKt
+      - SERVICE_NAME=bob
+      - MESSAGE_MANAGER_HOST=message-manager
+    depends_on:
+      - message-manager
+
+  # Client cu port 4000 (in gama 3000-5000 -> ACCEPTAT de regula PORT_RANGE)
+  chat-client-allowed:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.client.ChatClientMainKt
+      - FROM_USER=profesor
+      - FROM_PORT=4000
+      - MESSAGE_MANAGER_HOST=message-manager
+      - FILTER_HOST=filter-processor
+    stdin_open: true
+    tty: true
+    depends_on:
+      - filter-processor
+      - user-alice
+      - user-bob
+    profiles:
+      - allowed
+
+  # Client cu port 9500 (in gama 9000-9999 -> RESPINS de regula DENY PORT_RANGE)
+  chat-client-blocked:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.client.ChatClientMainKt
+      - FROM_USER=intrus
+      - FROM_PORT=9500
+      - MESSAGE_MANAGER_HOST=message-manager
+      - FILTER_HOST=filter-processor
+    stdin_open: true
+    tty: true
+    depends_on:
+      - filter-processor
+    profiles:
+      - blocked

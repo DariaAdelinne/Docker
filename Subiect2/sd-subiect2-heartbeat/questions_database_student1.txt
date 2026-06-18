@@ -1,0 +1,6 @@
+__healthcheck__
+OK_HEARTBEAT
+Care e sensul vietii?
+42
+Cat face 2+2?
+4

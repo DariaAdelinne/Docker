@@ -1,0 +1,4 @@
+De ce a trecut gaina strada?
+Ca sa ajunga pe partea cealalta
+Ce este SOLID?
+Un set de principii de proiectare orientata pe responsabilitati clare si dependente controlate.

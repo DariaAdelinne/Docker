@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+
+  # Procesorul de registru: mentine lista utilizatorilor activi (name -> host:port)
+  # Inlocuieste MessageManager din lab 8 — NU ruteaza mesaje, DOAR stocheaza adrese
+  user-registry:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.registry.UserRegistryMainKt
+    ports:
+      - "2000:2000"
+
+  # Utilizator Alice: se inregistreaza in registry, asculta mesaje P2P pe portul 3001
+  user-alice:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.chat.ChatMicroserviceMainKt
+      - SERVICE_NAME=alice
+      - SERVICE_HOST=user-alice
+      - LISTEN_PORT=3001
+      - REGISTRY_HOST=user-registry
+    ports:
+      - "3001:3001"
+    depends_on:
+      - user-registry
+
+  # Utilizator Bob: se inregistreaza in registry, asculta mesaje P2P pe portul 3001
+  user-bob:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.chat.ChatMicroserviceMainKt
+      - SERVICE_NAME=bob
+      - SERVICE_HOST=user-bob
+      - LISTEN_PORT=3001
+      - REGISTRY_HOST=user-registry
+    ports:
+      - "3002:3001"
+    depends_on:
+      - user-registry
+
+  # Clientul interactiv: face lookup in registry, apoi trimite P2P direct
+  # Pornit separat cu: docker compose run --rm chat-client
+  chat-client:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.client.ChatClientMainKt
+      - FROM_USER=client
+      - REGISTRY_HOST=user-registry
+    stdin_open: true
+    tty: true
+    depends_on:
+      - user-alice
+      - user-bob
+    profiles:
+      - client

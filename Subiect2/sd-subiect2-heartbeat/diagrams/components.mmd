@@ -1,0 +1,14 @@
+flowchart LR
+    Client[Client test / nc] -->|intrebare TCP 1600| Teacher
+    Teacher -->|REGISTER + QUESTION| MessageManager
+    Student1 -->|REGISTER + ANSWER| MessageManager
+    Student2 -->|REGISTER + ANSWER| MessageManager
+    MessageManager -->|broadcast / route| Student1
+    MessageManager -->|broadcast / route| Student2
+    MessageManager -->|ANSWER| Teacher
+    Heartbeat -->|fake question| Teacher
+    Heartbeat -->|PING health ports| Teacher
+    Heartbeat -->|PING health ports| MessageManager
+    Heartbeat -->|PING health ports| Student1
+    Heartbeat -->|PING health ports| Student2
+    Heartbeat -->|REPLICATE request| ReplicationProcessor

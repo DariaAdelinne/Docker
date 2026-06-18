@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+
+  # Ruteaza mesajele text deja censurate (din lab 8, cu coroutine)
+  message-manager:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.manager.MessageManagerMainKt
+    ports:
+      - "1500:1500"
+
+  # Noul microserviciu: procesor de flux care monitorizeaza comunicatia
+  # Incarca dictionarul din banned_words.txt si inlocuieste automat cuvintele interzise
+  censor-processor:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.censor.CensorProcessorMainKt
+      - MESSAGE_MANAGER_HOST=message-manager
+      - DICTIONARY_PATH=/app/banned_words.txt
+    ports:
+      - "1700:1700"
+    depends_on:
+      - message-manager
+
+  # Utilizator Alice — primeste mesajele deja censurate
+  user-alice:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.chat.ChatMicroserviceMainKt
+      - SERVICE_NAME=alice
+      - MESSAGE_MANAGER_HOST=message-manager
+    depends_on:
+      - message-manager
+
+  # Utilizator Bob — primeste mesajele deja censurate
+  user-bob:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.chat.ChatMicroserviceMainKt
+      - SERVICE_NAME=bob
+      - MESSAGE_MANAGER_HOST=message-manager
+    depends_on:
+      - message-manager
+
+  # Client interactiv — pornit separat cu: docker compose run --rm chat-client
+  chat-client:
+    build: .
+    environment:
+      - MAIN_CLASS=com.sd.laborator.client.ChatClientMainKt
+      - FROM_USER=profesor
+      - MESSAGE_MANAGER_HOST=message-manager
+      - CENSOR_HOST=censor-processor
+    stdin_open: true
+    tty: true
+    depends_on:
+      - censor-processor
+      - user-alice
+      - user-bob
+    profiles:
+      - client
